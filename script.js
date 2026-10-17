@@ -25,10 +25,46 @@ async function runPy(code){
  try{const v=await py.runPythonAsync(code);if(v!==undefined)r.push(['log','=> '+v])}catch(e){r.push(['err',e.message.trim().split('\n').slice(-2).join('\n')])}
  return r}
 
+let ac,rt,cur;
+const AC=()=>ac=ac||new(window.AudioContext||window.webkitAudioContext)();
+function ring(on){
+ clearInterval(rt);if(!on)return;
+ const x=AC();x.resume();
+ const play=()=>[880,988,1175,988,880,988,1175,1319].forEach((f,i)=>{const t=x.currentTime+i*.17,o=x.createOscillator(),g=x.createGain();o.type='triangle';o.frequency.value=f;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.22,t+.02);g.gain.exponentialRampToValueAtTime(.001,t+.16);o.connect(g).connect(x.destination);o.start(t);o.stop(t+.17)});
+ play();rt=setInterval(play,2800)}
+const stun=pc=>new Promise(res=>{let ip=null;const fin=()=>res(ip);setTimeout(fin,4000);
+ pc.onicecandidate=e=>{if(!e.candidate)return fin();const p=e.candidate.candidate.split(' ');if(p[7]==='srflx')ip=p[4]};
+ pc.createOffer().then(o=>pc.setLocalDescription(o)).catch(fin)});
+function call(j){
+ const el=$('#call'),st=$('#cs');let pc,ms,t,done=0;
+ $('#cn').textContent=j.intl;$('#ct').href='tel:'+j.e164;$('#cd').textContent='';$('#cm').classList.remove('mu');
+ el.hidden=false;void el.offsetWidth;el.classList.add('on');st.textContent='Menyiapkan sambungan...';
+ const end=m=>{if(done)return;done=1;clearTimeout(t);ring(false);ms&&ms.getTracks().forEach(k=>k.stop());pc&&pc.close();el.classList.remove('ringing');st.textContent=m;cur=null;line('Panggilan selesai: '+m,'mut');setTimeout(()=>{el.classList.remove('on');setTimeout(()=>el.hidden=true,600)},1100)};
+ cur={end,mute:()=>{ms&&ms.getAudioTracks().forEach(k=>k.enabled=!k.enabled);$('#cm').classList.toggle('mu')}};
+ (async()=>{
+  try{ms=await navigator.mediaDevices.getUserMedia({audio:true})}catch(_){line('Mikrofon tidak diizinkan, panggilan berjalan tanpa suara.','err')}
+  if(done)return;
+  pc=new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'}]});
+  pc.createDataChannel('x');ms&&ms.getTracks().forEach(k=>pc.addTrack(k,ms));
+  const ip=await stun(pc);
+  if(done)return;
+  line(ip?'STUN Google aktif. IP publik Anda: '+ip:'STUN Google tidak merespons (UDP mungkin diblokir).',ip?'ok':'err');
+  st.textContent='Memanggil...';el.classList.add('ringing');ring(true);
+  $('#cd').textContent='Sambungan WebRTC siap. Tekan tombol hijau untuk menelepon lewat ponsel Anda.';
+  t=setTimeout(()=>end('Tidak dijawab'),30000)})()}
+$('#ce').onclick=()=>cur&&cur.end('Panggilan diakhiri');
+$('#cm').onclick=()=>cur&&cur.mute();
+addEventListener('keydown',e=>e.key==='Escape'&&cur&&cur.end('Panggilan diakhiri'));
+
 const C={
-help(){card('Daftar Command',[['/Help','Lihat daftar command'],['/Run <bahasa> <kode>','Jalankan html, css, javascript, python'],['/Domain <domain>','Kadaluwarsa, IP, tanggal dibuat, riwayat (RDAP)'],['/System','OS, waktu server, memori server'],['/IP [ip/domain]','Lokasi IP; kosong = data center server'],['/Ping <ip/domain>','HTTP ping 4 kali'],['/Clear','Hapus teks terminal']]);
+help(){card('Daftar Command',[['/Help','Lihat daftar command'],['/Run <bahasa> <kode>','Jalankan html, css, javascript, python'],['/Domain <domain>','Kadaluwarsa, IP, tanggal dibuat, riwayat (RDAP)'],['/System','OS, waktu server, memori server'],['/IP [ip/domain]','Lokasi IP; kosong = data center server'],['/Ping <ip/domain>','HTTP ping 4 kali'],['/Telephone <nomor>','Verifikasi nomor (Python), lalu panggil'],['/Clear','Hapus teks terminal']]);
  line('Tab melengkapi command. Panah atas dan bawah membuka riwayat. Tulis \\n untuk baris baru di dalam kode.','mut')},
 clear(){out.innerHTML=''},
+async telephone(a){
+ if(!a)return line('Pemakaian: /Telephone <nomor>  (contoh: /Telephone +628123456789)','err');
+ const j=await job('Memverifikasi nomor (Python)...',()=>api('phone',a));
+ card('Nomor Terverifikasi',[['Nomor',j.intl],['Format lokal',j.national],['Wilayah',j.place],['Operator',j.carrier],['Jenis',j.type],['Zona waktu',j.tz.join(', ')]]);
+ call(j)},
 async run(a){
  const m=a.match(/^(\S+)\s+([\s\S]+)$/);
  if(!m)return line('Pemakaian: /Run <html|css|javascript|python> <kode>','err');
@@ -67,7 +103,7 @@ async function exec(raw){
  try{await f(m[2].trim())}catch(e){line('Error: '+e.message,'err')}}
 
 const names=Object.keys(C).map(k=>'/'+k);
-$('#f').onsubmit=async e=>{e.preventDefault();const v=inp.value.trim();if(!v||busy)return;hist.push(v);hi=hist.length;inp.value='';busy=true;await exec(v);busy=false;inp.focus()};
+$('#f').onsubmit=async e=>{e.preventDefault();const v=inp.value.trim();if(!v||busy)return;hist.push(v);hi=hist.length;inp.value='';busy=true;AC().resume();await exec(v);busy=false;inp.focus()};
 inp.onkeydown=e=>{
  if(e.key==='ArrowUp'&&hi>0){inp.value=hist[--hi];e.preventDefault()}
  else if(e.key==='ArrowDown'){hi=Math.min(hi+1,hist.length);inp.value=hist[hi]||'';e.preventDefault()}
