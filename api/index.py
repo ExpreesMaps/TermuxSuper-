@@ -87,7 +87,24 @@ def system(a):
             'mem_total': tot, 'mem_used': used, 'mem_pct': round(used * 100 / tot) if tot else 0,
             'fn_mem': os.environ.get('AWS_LAMBDA_FUNCTION_MEMORY_SIZE', '-')}
 
-ROUTES = {'domain': domain, 'ip': ip, 'ping': ping, 'system': system}
+def phone(a):
+    try:
+        import phonenumbers as pn
+        from phonenumbers import carrier, geocoder, timezone as tz
+    except ImportError:
+        raise Err('Library phonenumbers belum terpasang (cek requirements.txt)')
+    try: n = pn.parse(a.strip(), 'ID')
+    except pn.NumberParseException: raise Err('Format nomor tidak valid')
+    if not pn.is_valid_number(n): raise Err('Nomor tidak valid atau tidak terdaftar di rencana penomoran negara itu')
+    types = {0: 'Telepon rumah', 1: 'Seluler', 2: 'Rumah atau seluler', 3: 'Bebas pulsa', 4: 'Tarif premium', 6: 'VoIP'}
+    F = pn.PhoneNumberFormat
+    return {'e164': pn.format_number(n, F.E164), 'intl': pn.format_number(n, F.INTERNATIONAL),
+            'national': pn.format_number(n, F.NATIONAL),
+            'place': geocoder.description_for_number(n, 'id') or pn.region_code_for_number(n),
+            'carrier': carrier.name_for_number(n, 'en') or 'Tidak diketahui',
+            'type': types.get(pn.number_type(n), 'Lainnya'), 'tz': list(tz.time_zones_for_number(n))}
+
+ROUTES = {'phone': phone, 'domain': domain, 'ip': ip, 'ping': ping, 'system': system}
 
 class handler(BaseHTTPRequestHandler):
     def do_GET(self):
