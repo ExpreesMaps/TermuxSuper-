@@ -41,3 +41,22 @@ form:focus-within .ch{transform:translateX(3px)}
 input{flex:1;min-width:0;background:none;border:0;outline:0;color:var(--tx);font:inherit;font-size:16px;caret-color:var(--ac)}
 input::placeholder{color:var(--mut)}
 @media(prefers-reduced-motion:reduce){*,*::before{animation-duration:.01ms!important;animation-delay:0s!important;transition-duration:.01ms!important}}
+.call{position:fixed;inset:0;z-index:10;display:grid;place-items:center;background:rgba(6,9,18,.84);backdrop-filter:blur(24px);opacity:0;transition:opacity .6s var(--e)}
+.call[hidden]{display:none}.call.on{opacity:1}
+.ci{display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;padding:24px;transform:translateY(28px) scale(.96);transition:transform .8s var(--e)}
+.call.on .ci{transform:none}
+.av{position:relative;width:112px;height:112px;margin-bottom:20px;border-radius:50%;display:grid;place-items:center;color:#080b14;background:linear-gradient(135deg,var(--ac),var(--ac2))}
+.av>svg{width:46px;height:46px}
+.rg{position:absolute;inset:0;border-radius:50%;border:2px solid var(--ac);opacity:0}.r2{animation-delay:1s!important}
+.ringing .rg{animation:wave 2s ease-out infinite}
+.ringing .av>svg{animation:shake 1.3s ease-in-out infinite}
+@keyframes wave{from{opacity:.75;transform:scale(1)}to{opacity:0;transform:scale(2.2)}}
+@keyframes shake{0%,45%,100%{transform:rotate(0)}6%,18%,30%{transform:rotate(-16deg)}12%,24%,36%{transform:rotate(16deg)}}
+.ci h2{font-size:26px;font-weight:600}.ci p{color:var(--ok)}.ci small{color:var(--mut);max-width:300px;line-height:1.5}
+.cb{display:flex;gap:22px;margin-top:36px}
+.cb button,.cb a{width:62px;height:62px;border-radius:50%;border:1px solid var(--line);background:rgba(255,255,255,.07);color:var(--tx);display:grid;place-items:center;cursor:pointer;transition:transform .4s var(--e),background .4s var(--e)}
+.cb button:hover,.cb a:hover{transform:scale(1.1)}.cb button:active,.cb a:active{transform:scale(.94)}
+.cb svg{width:24px;height:24px}
+.cb .end{background:#e5484d;border-color:transparent}.cb .end svg{transform:rotate(135deg)}
+.cb #ct{background:#2fbf71;border-color:transparent;color:#04140c}
+.cb .mu{background:var(--tx);color:var(--bg)}
